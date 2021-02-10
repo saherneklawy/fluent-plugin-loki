@@ -169,16 +169,19 @@ class Fluent::Plugin::LokiOutput < Fluent::Plugin::Output
        end #end unless
     end # end begin
   end # end send_request
-  def format_labels(labels)
+  def format_labels(labels, record = {})
     st = "{"
     labels.each do |key, val|
+      st+= "#{key}=\"#{val}\","
+    end
+    record.each do |key, val|
       st+= "#{key}=\"#{val}\","
     end
     st[-1]="}"
     return st
   end
   def handle_record(tag, time, record)
-    rec = {"streams"=>[{"labels"=>format_labels(@labels), "entries"=>[{"ts"=>Time.now.iso8601(3), "line"=>record.to_json}]}]}
+    rec = {"streams"=>[{"labels"=>format_labels(@labels, record), "entries"=>[{"ts"=>Time.now.iso8601(3), "line"=>record.to_json}]}]}
     # I used time now instead of at 'time' because it cause 'Entry out of order' on loki's side
     req, uri = create_request(tag, time, rec)
     send_request(req, uri)
